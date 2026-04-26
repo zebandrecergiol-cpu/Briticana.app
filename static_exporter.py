@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 import json
+import re
 import shutil
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit, urlunsplit
 
 
 def path_to_output_file(output_dir: Path, route_path: str) -> Path:
@@ -13,6 +14,55 @@ def path_to_output_file(output_dir: Path, route_path: str) -> Path:
     if normalized.endswith('.html'):
         return output_dir / normalized
     return output_dir / normalized / 'index.html'
+
+
+def get_root_prefix(output_dir: Path, output_file: Path) -> str:
+    relative_path = output_file.parent.relative_to(output_dir) if output_file.parent != output_dir else Path('.')
+    depth = 0 if str(relative_path) == '.' else len(relative_path.parts)
+    if depth == 0:
+        return '.'
+    return '/'.join('..' for _ in range(depth))
+
+
+def join_relative(root_prefix: str, value: str) -> str:
+    clean_value = value.lstrip('/')
+    if root_prefix == '.':
+        return f'./{clean_value}' if clean_value else './'
+    if not clean_value:
+        return root_prefix + '/'
+    return f'{root_prefix}/{clean_value}'
+
+
+def rewrite_root_relative_url(url: str, root_prefix: str) -> str:
+    if not url.startswith('/') or url.startswith('//'):
+        return url
+
+    parts = urlsplit(url)
+    path = parts.path or '/'
+
+    if path == '/':
+        new_path = join_relative(root_prefix, '')
+    else:
+        if not path.startswith('/static/') and not path.startswith('/data/'):
+            last_segment = path.rsplit('/', 1)[-1]
+            if '.' not in last_segment and not path.endswith('/'):
+                path = path + '/'
+        new_path = join_relative(root_prefix, path)
+
+    return urlunsplit(('', '', new_path, parts.query, parts.fragment))
+
+
+def rewrite_exported_html(html: str, output_dir: Path, output_file: Path) -> str:
+    root_prefix = get_root_prefix(output_dir, output_file)
+
+    def replace_attribute(match):
+        attribute = match.group(1)
+        quote_char = match.group(2)
+        value = match.group(3)
+        return f'{attribute}={quote_char}{rewrite_root_relative_url(value, root_prefix)}{quote_char}'
+
+    pattern = re.compile(r'\b(href|src|action)=(["\'])(/[^"\']*)\2')
+    return pattern.sub(replace_attribute, html)
 
 
 def serialize_certificate(certificate):
@@ -72,7 +122,12 @@ def export_static_site(flask_app, product_model, certificate_model, get_domain_n
 
                 output_file = path_to_output_file(output_dir, route_path)
                 output_file.parent.mkdir(parents=True, exist_ok=True)
-                output_file.write_text(response.get_data(as_text=True), encoding='utf-8')
+                html = rewrite_exported_html(
+                    response.get_data(as_text=True),
+                    output_dir,
+                    output_file,
+                )
+                output_file.write_text(html, encoding='utf-8')
 
             data_dir.mkdir(parents=True, exist_ok=True)
             certificates_file = data_dir / 'certificates.json'
