@@ -46,6 +46,12 @@
         <a href="#users-panel">Users</a>
     </div>
 
+    {% if is_render_runtime %}
+    <div class="admin-hosting-note">
+        <strong>Free hosting note:</strong> text, products, domains, and other admin changes are saved in the database, but image file uploads can reset on free hosting. For stable images, paste a direct image URL into the image fields instead of relying on uploads.
+    </div>
+    {% endif %}
+
     <section id="content-panel" class="admin-section glass">
         <div class="admin-section-head">
             <div>
@@ -175,6 +181,7 @@
 
         <div class="admin-form-card">
             <h3>Add New Product</h3>
+            <p class="admin-inline-note">For the most reliable free-hosting setup, use image URLs for product cards and page banners.</p>
             <form action="{{ url_for('create_product') }}" method="POST" enctype="multipart/form-data" class="admin-grid-form compact">
                 <div class="form-group">
                     <label>Title</label>

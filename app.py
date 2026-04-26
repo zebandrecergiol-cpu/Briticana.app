@@ -2,6 +2,7 @@ from datetime import datetime
 from functools import wraps
 import os
 import shutil
+import sqlite3
 import uuid
 
 from flask import Flask, flash, redirect, render_template, request, send_from_directory, session, url_for
@@ -42,6 +43,10 @@ def build_database_uri():
     ):
         shutil.copy2(default_sqlite_path, sqlite_path)
     return 'sqlite:///' + sqlite_path
+
+
+def is_sqlite_uri(database_uri):
+    return database_uri.startswith('sqlite:///')
 
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'briticana_secret_key')
@@ -210,6 +215,9 @@ SITE_FIELD_MAP = {
 
 
 def ensure_database_schema():
+    if not is_sqlite_uri(app.config['SQLALCHEMY_DATABASE_URI']):
+        return
+
     with db.engine.begin() as connection:
         product_columns = {
             row[1]
@@ -225,9 +233,162 @@ def ensure_database_schema():
             )
 
 
+def parse_snapshot_datetime(value):
+    if not value:
+        return None
+
+    if isinstance(value, datetime):
+        return value
+
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value)
+        except ValueError:
+            for fmt in ('%Y-%m-%d %H:%M:%S.%f', '%Y-%m-%d %H:%M:%S'):
+                try:
+                    return datetime.strptime(value, fmt)
+                except ValueError:
+                    continue
+
+    return None
+
+
+def get_snapshot_rows(cursor, table_name):
+    exists = cursor.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+        (table_name,),
+    ).fetchone()
+    if not exists:
+        return []
+    return cursor.execute(f"SELECT * FROM {table_name}").fetchall()
+
+
+def seed_database_from_local_snapshot():
+    if not os.environ.get('DATABASE_URL'):
+        return
+
+    if not os.path.exists(default_sqlite_path):
+        return
+
+    if any([
+        Product.query.first(),
+        SiteContent.query.first(),
+        DomainContent.query.first(),
+        User.query.first(),
+    ]):
+        return
+
+    source_connection = sqlite3.connect(default_sqlite_path)
+    source_connection.row_factory = sqlite3.Row
+
+    try:
+        cursor = source_connection.cursor()
+        domain_rows = get_snapshot_rows(cursor, 'domain_content')
+        site_content_rows = get_snapshot_rows(cursor, 'site_content')
+        user_rows = get_snapshot_rows(cursor, 'user')
+        product_rows = get_snapshot_rows(cursor, 'product')
+        purchase_rows = get_snapshot_rows(cursor, 'purchase')
+        submission_rows = get_snapshot_rows(cursor, 'submission')
+        certificate_rows = get_snapshot_rows(cursor, 'certificate')
+
+        for row in domain_rows:
+            db.session.merge(
+                DomainContent(
+                    id=row['id'],
+                    name=row['name'],
+                    badge=row['badge'],
+                    headline=row['headline'],
+                    description=row['description'],
+                    created_at=parse_snapshot_datetime(row['created_at']) or datetime.utcnow(),
+                )
+            )
+
+        for row in site_content_rows:
+            db.session.merge(
+                SiteContent(
+                    key=row['key'],
+                    value=row['value'] or '',
+                    updated_at=parse_snapshot_datetime(row['updated_at']) or datetime.utcnow(),
+                )
+            )
+
+        for row in user_rows:
+            db.session.merge(
+                User(
+                    id=row['id'],
+                    unique_code=row['unique_code'],
+                    name=row['name'],
+                    category=row['category'],
+                    email=row['email'],
+                    phone=row['phone'],
+                    photo_url=row['photo_url'],
+                    created_at=parse_snapshot_datetime(row['created_at']) or datetime.utcnow(),
+                )
+            )
+
+        for row in product_rows:
+            row_keys = set(row.keys())
+            availability_status = row['availability_status'] if 'availability_status' in row_keys else 'Open'
+            if availability_status not in PRODUCT_STATUS_OPTIONS:
+                availability_status = 'Open'
+            db.session.merge(
+                Product(
+                    id=row['id'],
+                    title=row['title'],
+                    category=row['category'],
+                    domain=row['domain'],
+                    availability_status=availability_status,
+                    image_url=row['image_url'] if 'image_url' in row_keys else None,
+                    description=row['description'],
+                    procedure=row['procedure'],
+                    achievements=row['achievements'],
+                    price=row['price'],
+                    created_at=parse_snapshot_datetime(row['created_at']) or datetime.utcnow(),
+                )
+            )
+
+        for row in purchase_rows:
+            db.session.merge(
+                Purchase(
+                    id=row['id'],
+                    user_id=row['user_id'],
+                    product_id=row['product_id'],
+                    status=row['status'] or 'Active',
+                    created_at=parse_snapshot_datetime(row['created_at']) or datetime.utcnow(),
+                )
+            )
+
+        for row in submission_rows:
+            db.session.merge(
+                Submission(
+                    id=row['id'],
+                    user_id=row['user_id'],
+                    product_id=row['product_id'],
+                    github_link=row['github_link'],
+                    created_at=parse_snapshot_datetime(row['created_at']) or datetime.utcnow(),
+                )
+            )
+
+        for row in certificate_rows:
+            db.session.merge(
+                Certificate(
+                    id=row['id'],
+                    cert_code=row['cert_code'],
+                    user_id=row['user_id'],
+                    product_id=row['product_id'],
+                    created_at=parse_snapshot_datetime(row['created_at']) or datetime.utcnow(),
+                )
+            )
+
+        db.session.commit()
+    finally:
+        source_connection.close()
+
+
 with app.app_context():
     db.create_all()
     ensure_database_schema()
+    seed_database_from_local_snapshot()
 
 
 def get_site_content_map():
@@ -416,6 +577,8 @@ def inject_shared_context():
         'site_content': content,
         'admin_logged_in': session.get('is_admin', False),
         'current_year': datetime.utcnow().year,
+        'is_render_runtime': os.environ.get('RENDER') == 'true',
+        'is_database_backed': bool(os.environ.get('DATABASE_URL')),
         'product_image_for': lambda product: resolve_product_image(product, content),
         'product_status_label': get_status_label,
         'product_status_class': get_status_class,

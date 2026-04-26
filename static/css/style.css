@@ -1092,6 +1092,16 @@ nav a:hover::after { width: 100%; }
     font-weight: 700;
 }
 
+.admin-hosting-note {
+    margin-bottom: 24px;
+    padding: 18px 22px;
+    border-radius: 18px;
+    background: rgba(37, 99, 235, 0.08);
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    color: var(--text-dark);
+    line-height: 1.7;
+}
+
 .admin-section {
     padding: 32px;
     margin-bottom: 24px;
@@ -1135,6 +1145,13 @@ nav a:hover::after { width: 100%; }
 .admin-form-card p {
     color: var(--text-muted);
     margin-bottom: 18px;
+}
+
+.admin-inline-note {
+    background: var(--bg-light);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 14px;
+    padding: 14px 16px;
 }
 
 .admin-form-actions,
