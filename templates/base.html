@@ -33,7 +33,9 @@
                 <li><a href="{{ url_for('index') }}#projects">Projects</a></li>
                 <li><a href="{{ url_for('index') }}#tasks">Tasks</a></li>
                 <li><a href="{{ url_for('verification') }}">Verification</a></li>
-                {% if session.get('user_id') %}
+                {% if is_static_export %}
+                    <li><a href="#footer-contact" class="btn btn-primary">Contact</a></li>
+                {% elif session.get('user_id') %}
                     <li><a href="{{ url_for('dashboard') }}" class="btn btn-outline">My Portfolio</a></li>
                     <li><a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a></li>
                 {% else %}
@@ -70,7 +72,7 @@
                     <li><a href="{{ url_for('login') }}">Student Portal</a></li>
                 </ul>
             </div>
-            <div class="footer-section">
+            <div id="footer-contact" class="footer-section">
                 <h3>{{ site_content.footer_legal_title }}</h3>
                 <ul class="footer-links">
                     <li><a href="{{ site_content.privacy_policy_url }}">{{ site_content.privacy_policy_label }}</a></li>

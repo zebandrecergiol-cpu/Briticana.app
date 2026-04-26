@@ -12,6 +12,9 @@
         </div>
         <div class="admin-header-actions">
             <a href="{{ url_for('index') }}" class="btn btn-outline">View Website</a>
+            <form action="{{ url_for('export_static') }}" method="POST">
+                <button type="submit" class="btn btn-outline">Export Static Site</button>
+            </form>
             <a href="{{ url_for('admin_logout') }}" class="btn btn-primary">Log Out</a>
         </div>
     </div>

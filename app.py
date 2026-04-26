@@ -19,6 +19,7 @@ from models import (
     User,
     db,
 )
+from static_exporter import export_static_site
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
@@ -74,6 +75,7 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['ADMIN_URL_PREFIX'] = normalize_admin_prefix(
     os.environ.get('ADMIN_URL_PREFIX', '/admin')
 )
+app.config['STATIC_EXPORT_MODE'] = False
 
 if os.environ.get('RENDER') == 'true' or os.environ.get('PYTHONANYWHERE_SITE'):
     app.config['PREFERRED_URL_SCHEME'] = 'https'
@@ -602,6 +604,7 @@ def inject_shared_context():
         'is_render_runtime': os.environ.get('RENDER') == 'true',
         'is_database_backed': bool(os.environ.get('DATABASE_URL')),
         'admin_url_prefix': app.config['ADMIN_URL_PREFIX'],
+        'is_static_export': app.config.get('STATIC_EXPORT_MODE', False),
         'product_image_for': lambda product: resolve_product_image(product, content),
         'product_status_label': get_status_label,
         'product_status_class': get_status_class,
@@ -625,7 +628,7 @@ def index():
     )
 
 
-@app.route('/domain/<string:domain_name>')
+@app.route('/domain/<path:domain_name>')
 def domain_page(domain_name):
     sync_domain_records()
     domain_content = DomainContent.query.filter_by(name=domain_name).first()
@@ -962,6 +965,19 @@ def delete_product(product_id):
     db.session.commit()
     flash('Product deleted successfully.')
     return redirect(url_for('admin_dashboard') + '#product-panel')
+
+
+@app.route(f"{app.config['ADMIN_URL_PREFIX']}/export-static", methods=['POST'])
+@admin_required
+def export_static():
+    output_dir = export_static_site(
+        app,
+        Product,
+        Certificate,
+        get_all_domain_names,
+    )
+    flash(f'Static website exported successfully to {output_dir}.')
+    return redirect(url_for('admin_dashboard'))
 
 
 @app.route('/health')

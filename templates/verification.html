@@ -6,6 +6,66 @@
         <h2 class="verification-title">{{ site_content.verification_title }}</h2>
         <p class="verification-copy">{{ site_content.verification_description }}</p>
 
+        {% if is_static_export %}
+        <form id="static-verification-form" class="verification-form">
+            <input type="text" id="static-cert-code" class="form-control" placeholder="Enter Verification Code (e.g. CERT-XYZ123)" required>
+            <button type="submit" class="btn btn-primary verification-submit">Verify Now</button>
+        </form>
+
+        <hr class="verification-divider">
+        <div id="static-verification-result"></div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const form = document.getElementById('static-verification-form');
+                const input = document.getElementById('static-cert-code');
+                const result = document.getElementById('static-verification-result');
+
+                form.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const code = input.value.trim().toUpperCase();
+                    if (!code) {
+                        return;
+                    }
+
+                    result.innerHTML = '<div class="verification-result"><p>Checking certificate...</p></div>';
+
+                    try {
+                        const response = await fetch(new URL('../data/certificates.json', window.location.href));
+                        const certificates = await response.json();
+                        const certificate = certificates.find(item => item.cert_code.toUpperCase() === code);
+
+                        if (certificate) {
+                            result.innerHTML = `
+                                <div class="verification-result verification-valid">
+                                    <h3 class="verification-heading">Valid Certificate</h3>
+                                    <p><strong>Issued To:</strong> ${certificate.issued_to}</p>
+                                    <p><strong>Program:</strong> ${certificate.program} (${certificate.category})</p>
+                                    <p><strong>Issue Date:</strong> ${certificate.issue_date}</p>
+                                    <p><strong>Status:</strong> ${certificate.status}</p>
+                                    ${certificate.github_link ? `<div class="verification-link-box"><strong>Final Output Link:</strong><br><a href="${certificate.github_link}" target="_blank" style="color: var(--secondary); text-decoration: underline;">${certificate.github_link}</a></div>` : ''}
+                                </div>
+                            `;
+                        } else {
+                            result.innerHTML = `
+                                <div class="verification-result verification-invalid">
+                                    <h3 class="verification-heading">Verification Failed</h3>
+                                    <p>We could not find a certificate matching the code "${code}". Please ensure the code is correct and try again.</p>
+                                </div>
+                            `;
+                        }
+                    } catch (error) {
+                        result.innerHTML = `
+                            <div class="verification-result verification-invalid">
+                                <h3 class="verification-heading">Verification Unavailable</h3>
+                                <p>The verification index could not be loaded right now.</p>
+                            </div>
+                        `;
+                    }
+                });
+            });
+        </script>
+        {% else %}
         <form method="GET" action="{{ url_for('verification') }}" class="verification-form">
             <input type="text" name="cert_code" class="form-control" placeholder="Enter Verification Code (e.g. CERT-XYZ123)" required value="{{ cert_code or '' }}">
             <button type="submit" class="btn btn-primary verification-submit">Verify Now</button>
@@ -38,6 +98,7 @@
                     <p>We could not find a certificate matching the code "{{ cert_code }}". Please ensure the code is correct and try again.</p>
                 </div>
             {% endif %}
+        {% endif %}
         {% endif %}
     </div>
 </div>
