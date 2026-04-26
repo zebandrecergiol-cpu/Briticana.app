@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-glow-container">
+    <div class="bg-glow-orb bg-glow-orb-1"></div>
+    <div class="bg-glow-orb bg-glow-orb-2"></div>
+</div>
+
+<section class="hero animate-on-scroll">
+    <div class="hero-content">
+        <div class="hero-badge">
+            {{ site_content.hero_badge }}
+        </div>
+        <h1>{{ site_content.hero_title }}</h1>
+        <p>{{ site_content.hero_description }}</p>
+
+        <div class="hero-actions">
+            <a href="#internships" class="btn btn-primary hero-cta">{{ site_content.hero_primary_button_text }}</a>
+            <a href="{{ url_for('verification') }}" class="btn btn-outline hero-cta">{{ site_content.hero_secondary_button_text }}</a>
+        </div>
+    </div>
+
+    <div class="hero-image-container">
+        <img src="{{ site_content.hero_image }}" alt="Hero" class="hero-image">
+
+        <div class="floating-card" style="top: 10%; left: -10%;">
+            <div class="floating-icon floating-icon-blue">*</div>
+            <div>
+                <div class="floating-title">{{ site_content.hero_card_one_title }}</div>
+                <div class="floating-text">{{ site_content.hero_card_one_text }}</div>
+            </div>
+        </div>
+
+        <div class="floating-card" style="bottom: 10%; right: -5%; animation-delay: 2s;">
+            <div class="floating-icon floating-icon-rose">+</div>
+            <div>
+                <div class="floating-title">{{ site_content.hero_card_two_title }}</div>
+                <div class="floating-text">{{ site_content.hero_card_two_text }}</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="domains" class="domains animate-on-scroll">
+    <h2 class="section-title">{{ site_content.domains_title }}</h2>
+    <p class="section-copy">{{ site_content.domains_description }}</p>
+    <div class="domain-chip-grid">
+        {% for domain in domains %}
+        <a href="{{ url_for('domain_page', domain_name=domain) }}" class="domain-chip">
+            <h3>{{ domain }}</h3>
+        </a>
+        {% else %}
+        <p>No domains available.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section id="internships" class="scroller-section animate-on-scroll">
+    <h2 class="section-title section-title-tight">{{ site_content.internships_title }}</h2>
+    <p class="section-copy">{{ site_content.internships_description }}</p>
+    <div class="scroller-container">
+        <div class="scroller-track">
+            {% for item in internships %}
+            <div class="product-card">
+                <img src="{{ product_image_for(item) }}" class="product-card-img" alt="{{ item.title }}">
+                <div class="product-card-body">
+                    <div class="product-card-meta">
+                        <span class="product-category-pill">{{ item.category }}</span>
+                        <span class="status-pill {{ product_status_class(item.availability_status) }}">{{ product_status_label(item.availability_status) }}</span>
+                    </div>
+                    <h3>{{ item.title }}</h3>
+                    <p class="product-summary">{{ item.description[:90] }}...</p>
+                    <div class="product-price">EUR {{ '%.2f'|format(item.price) }}</div>
+                    <a href="{{ url_for('details', product_id=item.id) }}" class="btn btn-primary product-action">Enroll Now</a>
+                </div>
+            </div>
+            {% endfor %}
+            {% for item in internships %}
+            <div class="product-card">
+                <img src="{{ product_image_for(item) }}" class="product-card-img" alt="{{ item.title }}">
+                <div class="product-card-body">
+                    <div class="product-card-meta">
+                        <span class="product-category-pill">{{ item.category }}</span>
+                        <span class="status-pill {{ product_status_class(item.availability_status) }}">{{ product_status_label(item.availability_status) }}</span>
+                    </div>
+                    <h3>{{ item.title }}</h3>
+                    <p class="product-summary">{{ item.description[:90] }}...</p>
+                    <div class="product-price">EUR {{ '%.2f'|format(item.price) }}</div>
+                    <a href="{{ url_for('details', product_id=item.id) }}" class="btn btn-primary product-action">Enroll Now</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if not internships %}
+        <p class="empty-state">No internships available yet.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section id="projects" class="scroller-section animate-on-scroll">
+    <h2 class="section-title section-title-tight">{{ site_content.projects_title }}</h2>
+    <p class="section-copy">{{ site_content.projects_description }}</p>
+    <div class="scroller-container">
+        <div class="scroller-track" style="animation-duration: 45s; animation-direction: reverse;">
+            {% for item in projects %}
+            <div class="product-card">
+                <img src="{{ product_image_for(item) }}" class="product-card-img" alt="{{ item.title }}">
+                <div class="product-card-body">
+                    <div class="product-card-meta">
+                        <span class="product-category-pill">{{ item.category }}</span>
+                        <span class="status-pill {{ product_status_class(item.availability_status) }}">{{ product_status_label(item.availability_status) }}</span>
+                    </div>
+                    <h3>{{ item.title }}</h3>
+                    <p class="product-summary">{{ item.description[:90] }}...</p>
+                    <div class="product-price">EUR {{ '%.2f'|format(item.price) }}</div>
+                    <a href="{{ url_for('details', product_id=item.id) }}" class="btn btn-outline product-action">View Project</a>
+                </div>
+            </div>
+            {% endfor %}
+            {% for item in projects %}
+            <div class="product-card">
+                <img src="{{ product_image_for(item) }}" class="product-card-img" alt="{{ item.title }}">
+                <div class="product-card-body">
+                    <div class="product-card-meta">
+                        <span class="product-category-pill">{{ item.category }}</span>
+                        <span class="status-pill {{ product_status_class(item.availability_status) }}">{{ product_status_label(item.availability_status) }}</span>
+                    </div>
+                    <h3>{{ item.title }}</h3>
+                    <p class="product-summary">{{ item.description[:90] }}...</p>
+                    <div class="product-price">EUR {{ '%.2f'|format(item.price) }}</div>
+                    <a href="{{ url_for('details', product_id=item.id) }}" class="btn btn-outline product-action">View Project</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if not projects %}
+        <p class="empty-state">No projects available yet.</p>
+        {% endif %}
+    </div>
+</section>
+
+<section id="tasks" class="scroller-section animate-on-scroll" style="margin-bottom: 100px;">
+    <h2 class="section-title section-title-tight">{{ site_content.tasks_title }}</h2>
+    <p class="section-copy">{{ site_content.tasks_description }}</p>
+    <div class="scroller-container">
+        <div class="scroller-track" style="animation-duration: 35s;">
+            {% for item in tasks %}
+            <div class="product-card">
+                <img src="{{ product_image_for(item) }}" class="product-card-img" alt="{{ item.title }}">
+                <div class="product-card-body">
+                    <div class="product-card-meta">
+                        <span class="product-category-pill">{{ item.category }}</span>
+                        <span class="status-pill {{ product_status_class(item.availability_status) }}">{{ product_status_label(item.availability_status) }}</span>
+                    </div>
+                    <h3>{{ item.title }}</h3>
+                    <p class="product-summary">{{ item.description[:90] }}...</p>
+                    <div class="product-price">EUR {{ '%.2f'|format(item.price) }}</div>
+                    <a href="{{ url_for('details', product_id=item.id) }}" class="btn btn-outline product-action">Start Task</a>
+                </div>
+            </div>
+            {% endfor %}
+            {% for item in tasks %}
+            <div class="product-card">
+                <img src="{{ product_image_for(item) }}" class="product-card-img" alt="{{ item.title }}">
+                <div class="product-card-body">
+                    <div class="product-card-meta">
+                        <span class="product-category-pill">{{ item.category }}</span>
+                        <span class="status-pill {{ product_status_class(item.availability_status) }}">{{ product_status_label(item.availability_status) }}</span>
+                    </div>
+                    <h3>{{ item.title }}</h3>
+                    <p class="product-summary">{{ item.description[:90] }}...</p>
+                    <div class="product-price">EUR {{ '%.2f'|format(item.price) }}</div>
+                    <a href="{{ url_for('details', product_id=item.id) }}" class="btn btn-outline product-action">Start Task</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% if not tasks %}
+        <p class="empty-state">No tasks available yet.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

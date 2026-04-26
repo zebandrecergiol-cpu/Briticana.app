@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login | Briticana{% endblock %}
+
+{% block content %}
+<div class="main-container admin-login-shell">
+    <div class="glass admin-login-card">
+        <p class="admin-eyebrow">ADMIN ACCESS</p>
+        <h1>Sign In to the Admin Panel</h1>
+        <p class="admin-subtitle">Use your admin username and password to manage the website without editing code.</p>
+
+        <form method="POST" action="{{ url_for('admin_login') }}">
+            <div class="form-group">
+                <label>Admin Username</label>
+                <input type="text" name="username" class="form-control" placeholder="admin" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" class="form-control" placeholder="Enter password" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%;">Open Admin Panel</button>
+        </form>
+
+        <div class="admin-login-note">
+            Default login for this project is <strong>admin</strong> / <strong>admin123</strong>. Change these using the <code>ADMIN_USERNAME</code> and <code>ADMIN_PASSWORD</code> environment variables before deployment.
+        </div>
+    </div>
+</div>
+{% endblock %}

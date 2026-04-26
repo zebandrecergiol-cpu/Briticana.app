@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-container" style="display: flex; justify-content: center; align-items: center; min-height: 70vh;">
+    <div class="glass" style="padding: 40px; width: 100%; max-width: 500px; text-align: center; background: white;">
+        <h2>Access Your Portfolio</h2>
+        <p style="color: var(--text-muted); margin-bottom: 30px;">Enter your unique access code received after purchase to login or create your account.</p>
+        
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="form-group" style="text-align: left;">
+                <label>Unique Access Code</label>
+                <input type="text" name="unique_code" class="form-control" placeholder="e.g. B-1X8F9A" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Enter Portfolio</button>
+        </form>
+
+        <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 30px 0;">
+        
+        <h3 style="font-size: 1.1rem; margin-bottom: 15px;">Setting up for the first time?</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted);">
+            If your code is new, you will be prompted to set up your profile (Name, Photo, Category) on the next screen.
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{% block meta_description %}Briticana offers guaranteed virtual internships, real-world tech projects, and skill sprints. Build your professional portfolio and earn verifiable certificates.{% endblock %}">
+    <meta name="keywords" content="internships, tech projects, virtual internships, portfolio building, skill sprints, verifiable certificates, online courses">
+    <meta name="author" content="Briticana">
+    <title>{% block title %}Briticana - Guaranteed Virtual Internships & Real-World Projects{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: {{ site_content.theme_primary }};
+            --secondary: {{ site_content.theme_secondary }};
+            --accent: {{ site_content.theme_accent }};
+            --bg-light: {{ site_content.theme_bg_light }};
+            --text-dark: {{ site_content.theme_text_dark }};
+            --text-muted: {{ site_content.theme_text_muted }};
+        }
+    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <header id="main-header" class="glass">
+        <div class="logo">
+            <img src="{{ site_content.logo_image }}" alt="Briticana Logo" height="40" style="vertical-align: middle;">
+        </div>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="{{ url_for('index') }}#internships">Internships</a></li>
+                <li><a href="{{ url_for('index') }}#projects">Projects</a></li>
+                <li><a href="{{ url_for('index') }}#tasks">Tasks</a></li>
+                <li><a href="{{ url_for('verification') }}">Verification</a></li>
+                {% if session.get('user_id') %}
+                    <li><a href="{{ url_for('dashboard') }}" class="btn btn-outline">My Portfolio</a></li>
+                    <li><a href="{{ url_for('logout') }}" class="btn btn-outline">Logout</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}" class="btn btn-primary">Login / Register</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-stack">
+                {% for message in messages %}
+                    <div class="flash-message">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>{{ site_content.footer_about_title }}</h3>
+                <p>{{ site_content.footer_about_description }}</p>
+            </div>
+            <div class="footer-section">
+                <h3>{{ site_content.footer_links_title }}</h3>
+                <ul class="footer-links">
+                    <li><a href="{{ url_for('index') }}">Home</a></li>
+                    <li><a href="{{ url_for('index') }}#domains">Domains</a></li>
+                    <li><a href="{{ url_for('verification') }}">Verify Certificate</a></li>
+                    <li><a href="{{ url_for('login') }}">Student Portal</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>{{ site_content.footer_legal_title }}</h3>
+                <ul class="footer-links">
+                    <li><a href="{{ site_content.privacy_policy_url }}">{{ site_content.privacy_policy_label }}</a></li>
+                    <li><a href="{{ site_content.terms_url }}">{{ site_content.terms_label }}</a></li>
+                    <li><a href="mailto:{{ site_content.support_email }}">{{ site_content.support_email }}</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; {{ current_year }} {{ site_content.footer_copyright }}
+        </div>
+    </footer>
+
+    <div class="wa-widget-container">
+        <div class="wa-popup" id="wa-popup">
+            <div class="wa-header">
+                <div class="avatar">
+                    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></svg>
+                </div>
+                <div>
+                    <h4>{{ site_content.whatsapp_title }}</h4>
+                    <p>{{ site_content.whatsapp_status }}</p>
+                </div>
+                <div class="wa-close" id="wa-close">&times;</div>
+            </div>
+            <div class="wa-body">
+                <div class="wa-message">
+                    <strong>Hi there!</strong><br><br>
+                    {{ site_content.whatsapp_message }}
+                </div>
+                <a href="{{ site_content.whatsapp_link }}" target="_blank" class="wa-join-btn">
+                    Join Community
+                </a>
+            </div>
+        </div>
+
+        <div class="wa-button" id="wa-button">
+            <svg viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766 0 1.015.265 2.006.769 2.879l-.815 2.977 3.048-.8c.846.467 1.808.714 2.766.714h.001c3.18 0 5.766-2.586 5.768-5.766.002-3.181-2.584-5.77-5.769-5.77zm3.176 8.232c-.174.492-.998.948-1.392 1.011-.341.054-.803.14-2.457-.547-1.996-.827-3.26-2.859-3.359-2.991-.098-.133-.801-1.066-.801-2.035 0-.969.502-1.448.681-1.631.179-.184.389-.23.518-.23h.36c.129 0 .303-.048.474.364.18.432.581 1.417.633 1.523.051.105.086.23.021.36-.065.131-.098.212-.194.327-.098.114-.206.243-.292.345-.098.113-.203.238-.075.46.128.223.57 .943 1.222 1.525.842.753 1.536.983 1.766 1.088.228.106.363.088.498-.066.136-.153.585-.681.742-.916.157-.234.314-.197.521-.119.208.079 1.312.618 1.538.731.226.113.376.169.432.264.056.094.056.549-.118 1.041z"/></svg>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel | Briticana{% endblock %}
+
+{% block content %}
+<div class="main-container admin-shell">
+    <div class="admin-header-card glass">
+        <div>
+            <p class="admin-eyebrow">CONTENT MANAGEMENT</p>
+            <h1>Briticana Admin Panel</h1>
+            <p class="admin-subtitle">Manage website copy, visuals, domains, internships, projects, and tasks without editing code.</p>
+        </div>
+        <div class="admin-header-actions">
+            <a href="{{ url_for('index') }}" class="btn btn-outline">View Website</a>
+            <a href="{{ url_for('admin_logout') }}" class="btn btn-primary">Log Out</a>
+        </div>
+    </div>
+
+    <div class="admin-stats">
+        <div class="admin-stat-card glass">
+            <span>Total Products</span>
+            <strong>{{ products|length }}</strong>
+        </div>
+        <div class="admin-stat-card glass">
+            <span>Domains</span>
+            <strong>{{ domains|length }}</strong>
+        </div>
+        <div class="admin-stat-card glass">
+            <span>Internships</span>
+            <strong>{{ product_counts['Internship'] }}</strong>
+        </div>
+        <div class="admin-stat-card glass">
+            <span>Projects</span>
+            <strong>{{ product_counts['Project'] }}</strong>
+        </div>
+        <div class="admin-stat-card glass">
+            <span>Tasks</span>
+            <strong>{{ product_counts['Task'] }}</strong>
+        </div>
+    </div>
+
+    <div class="admin-quick-links glass">
+        <a href="#content-panel">Website Text and Theme</a>
+        <a href="#domain-panel">Domains</a>
+        <a href="#product-panel">Products and Images</a>
+        <a href="#users-panel">Users</a>
+    </div>
+
+    <section id="content-panel" class="admin-section glass">
+        <div class="admin-section-head">
+            <div>
+                <p class="admin-section-label">WEBSITE TEXT AND APPEARANCE</p>
+                <h2>Edit Public Content and Front-End Styling</h2>
+            </div>
+            <p>These settings control the visible copy, hero image, fallback card images, logo, and main color theme used on the website.</p>
+        </div>
+
+        <form action="{{ url_for('update_site_content') }}" method="POST" enctype="multipart/form-data" class="admin-grid-form">
+            {% for section in content_sections %}
+            <div class="admin-form-card">
+                <h3>{{ section.title }}</h3>
+                <p>{{ section.description }}</p>
+                {% for field in section.fields %}
+                <div class="form-group">
+                    <label for="{{ field.key }}">{{ field.label }}</label>
+                    {% if field.type == 'textarea' %}
+                    <textarea id="{{ field.key }}" name="{{ field.key }}" class="form-control" rows="{{ field.rows }}">{{ content_map[field.key] }}</textarea>
+                    {% elif field.type == 'color' %}
+                    <input id="{{ field.key }}" type="color" name="{{ field.key }}" class="form-control color-input" value="{{ content_map[field.key] }}">
+                    {% else %}
+                    <input id="{{ field.key }}" type="text" name="{{ field.key }}" class="form-control" value="{{ content_map[field.key] }}">
+                    {% endif %}
+
+                    {% if field.preview and content_map[field.key] %}
+                    <div class="admin-image-preview-wrap">
+                        <img src="{{ content_map[field.key] }}" alt="{{ field.label }}" class="admin-image-preview">
+                    </div>
+                    {% endif %}
+
+                    {% if field.upload_name %}
+                    <label class="admin-upload-label" for="{{ field.upload_name }}">Upload replacement image</label>
+                    <input id="{{ field.upload_name }}" type="file" name="{{ field.upload_name }}" class="form-control" accept="image/*">
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+
+            <div class="admin-form-actions">
+                <button type="submit" class="btn btn-primary">Save Website Content and Styling</button>
+            </div>
+        </form>
+    </section>
+
+    <section id="domain-panel" class="admin-section glass">
+        <div class="admin-section-head">
+            <div>
+                <p class="admin-section-label">DOMAINS</p>
+                <h2>Manage Career Domains</h2>
+            </div>
+            <p>Create domain landing pages and update their badge, title, and description.</p>
+        </div>
+
+        <div class="admin-two-column">
+            <div class="admin-form-card">
+                <h3>Add New Domain</h3>
+                <form action="{{ url_for('create_domain') }}" method="POST">
+                    <div class="form-group">
+                        <label>Domain Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Data Science" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Badge</label>
+                        <input type="text" name="badge" class="form-control" value="{{ site_content.domain_badge }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Headline</label>
+                        <input type="text" name="headline" class="form-control" placeholder="e.g. Data Science Programs">
+                    </div>
+                    <div class="form-group">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="4" placeholder="Describe what visitors will find in this domain."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Domain</button>
+                </form>
+            </div>
+
+            <div class="admin-list-stack">
+                {% for domain in domains %}
+                <details class="admin-collapsible" {% if loop.first %}open{% endif %}>
+                    <summary>
+                        <span>{{ domain.name }}</span>
+                        <span>{{ domain_product_counts[domain.name] }} products</span>
+                    </summary>
+                    <form action="{{ url_for('update_domain', domain_id=domain.id) }}" method="POST" class="admin-edit-form">
+                        <div class="form-group">
+                            <label>Domain Name</label>
+                            <input type="text" name="name" class="form-control" value="{{ domain.name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Badge</label>
+                            <input type="text" name="badge" class="form-control" value="{{ domain.badge or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Headline</label>
+                            <input type="text" name="headline" class="form-control" value="{{ domain.headline or '' }}">
+                        </div>
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea name="description" class="form-control" rows="4">{{ domain.description or '' }}</textarea>
+                        </div>
+                        <div class="admin-inline-actions">
+                            <button type="submit" class="btn btn-primary">Save Domain</button>
+                        </div>
+                    </form>
+                    <form action="{{ url_for('delete_domain', domain_id=domain.id) }}" method="POST" onsubmit="return confirm('Delete this domain? Products inside it must be moved or removed first.');">
+                        <button type="submit" class="btn btn-outline danger-btn">Delete Domain</button>
+                    </form>
+                </details>
+                {% else %}
+                <div class="admin-empty">No domains available yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section id="product-panel" class="admin-section glass">
+        <div class="admin-section-head">
+            <div>
+                <p class="admin-section-label">PRODUCTS AND IMAGES</p>
+                <h2>Manage Internships, Projects, and Tasks</h2>
+            </div>
+            <p>Add offers, replace their images, and update the visible details shown in the frontend cards and detail pages.</p>
+        </div>
+
+        <div class="admin-form-card">
+            <h3>Add New Product</h3>
+            <form action="{{ url_for('create_product') }}" method="POST" enctype="multipart/form-data" class="admin-grid-form compact">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" name="title" class="form-control" placeholder="e.g. Full-Stack Internship" required>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category" class="form-control">
+                        <option value="Internship">Internship</option>
+                        <option value="Project">Project</option>
+                        <option value="Task">Task</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Domain</label>
+                    <input type="text" name="domain" class="form-control" list="domain-options" placeholder="e.g. Web Development" required>
+                </div>
+                <div class="form-group">
+                    <label>Availability Status</label>
+                    <select name="availability_status" class="form-control">
+                        {% for status in product_status_options %}
+                        <option value="{{ status }}">{{ product_status_label(status) }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Price</label>
+                    <input type="number" name="price" step="0.01" class="form-control" placeholder="199" required>
+                </div>
+                <div class="form-group admin-span-full">
+                    <label>Image URL</label>
+                    <input type="text" name="image_url" class="form-control" placeholder="Paste a direct image URL or upload below">
+                </div>
+                <div class="form-group admin-span-full">
+                    <label>Upload Product Image</label>
+                    <input type="file" name="image_file" class="form-control" accept="image/*">
+                </div>
+                <div class="form-group admin-span-full">
+                    <label>Description</label>
+                    <textarea name="description" class="form-control" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Procedure</label>
+                    <textarea name="procedure" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Achievements</label>
+                    <textarea name="achievements" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="admin-form-actions">
+                    <button type="submit" class="btn btn-primary">Add Product</button>
+                </div>
+            </form>
+        </div>
+
+        <datalist id="domain-options">
+            {% for domain_name in domain_names %}
+            <option value="{{ domain_name }}"></option>
+            {% endfor %}
+        </datalist>
+
+        <div class="admin-list-stack">
+            {% for product in products %}
+            <details class="admin-collapsible">
+                <summary>
+                    <span>{{ product.title }}</span>
+                    <span>{{ product.category }} | {{ product.domain }} | {{ product_status_label(product.availability_status) }}</span>
+                </summary>
+                <div class="admin-product-preview-row">
+                    <img src="{{ product_image_for(product) }}" alt="{{ product.title }}" class="admin-image-preview admin-image-preview-large">
+                </div>
+                <form action="{{ url_for('update_product', product_id=product.id) }}" method="POST" enctype="multipart/form-data" class="admin-edit-form">
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" name="title" class="form-control" value="{{ product.title }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select name="category" class="form-control">
+                            <option value="Internship" {% if product.category == 'Internship' %}selected{% endif %}>Internship</option>
+                            <option value="Project" {% if product.category == 'Project' %}selected{% endif %}>Project</option>
+                            <option value="Task" {% if product.category == 'Task' %}selected{% endif %}>Task</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Domain</label>
+                        <input type="text" name="domain" class="form-control" list="domain-options" value="{{ product.domain }}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Availability Status</label>
+                        <select name="availability_status" class="form-control">
+                            {% for status in product_status_options %}
+                            <option value="{{ status }}" {% if (product.availability_status or 'Open') == status %}selected{% endif %}>{{ product_status_label(status) }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="number" name="price" step="0.01" class="form-control" value="{{ product.price }}" required>
+                    </div>
+                    <div class="form-group admin-span-full">
+                        <label>Image URL</label>
+                        <input type="text" name="image_url" class="form-control" value="{{ product.image_url or '' }}">
+                    </div>
+                    <div class="form-group admin-span-full">
+                        <label>Upload New Product Image</label>
+                        <input type="file" name="image_file" class="form-control" accept="image/*">
+                    </div>
+                    <div class="form-group admin-span-full">
+                        <label>Description</label>
+                        <textarea name="description" class="form-control" rows="4" required>{{ product.description }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Procedure</label>
+                        <textarea name="procedure" class="form-control" rows="4">{{ product.procedure }}</textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Achievements</label>
+                        <textarea name="achievements" class="form-control" rows="4">{{ product.achievements }}</textarea>
+                    </div>
+                    <div class="admin-inline-actions admin-span-full">
+                        <button type="submit" class="btn btn-primary">Save Product</button>
+                    </div>
+                </form>
+                <form action="{{ url_for('delete_product', product_id=product.id) }}" method="POST" onsubmit="return confirm('Delete this product?');">
+                    <button type="submit" class="btn btn-outline danger-btn">Delete Product</button>
+                </form>
+            </details>
+            {% else %}
+            <div class="admin-empty">No products found.</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section id="users-panel" class="admin-section glass">
+        <div class="admin-section-head">
+            <div>
+                <p class="admin-section-label">USERS</p>
+                <h2>Registered Users</h2>
+            </div>
+            <p>This section gives you a quick overview of users currently stored in the system.</p>
+        </div>
+
+        <div class="admin-user-grid">
+            {% for user in users %}
+            <div class="admin-user-card">
+                <h3>{{ user.name or 'Unnamed User' }}</h3>
+                <p><strong>Access Code:</strong> {{ user.unique_code }}</p>
+                <p><strong>Email:</strong> {{ user.email or 'Not provided' }}</p>
+                <p><strong>Category:</strong> {{ user.category or 'Not set' }}</p>
+                <p><strong>Joined:</strong> {{ user.created_at.strftime('%Y-%m-%d') }}</p>
+            </div>
+            {% else %}
+            <div class="admin-empty">No users found.</div>
+            {% endfor %}
+        </div>
+    </section>
+</div>
+{% endblock %}

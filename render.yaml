@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: briticana-app
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.13
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SQLITE_PATH
+        value: /opt/render/project/src/storage/briticana.db
+      - key: UPLOAD_FOLDER
+        value: /opt/render/project/src/storage/uploads
+    disk:
+      name: briticana-storage
+      mountPath: /opt/render/project/src/storage
+      sizeGB: 1

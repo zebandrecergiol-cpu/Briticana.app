@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-container verification-shell">
+    <div class="glass verification-card">
+        <h2 class="verification-title">{{ site_content.verification_title }}</h2>
+        <p class="verification-copy">{{ site_content.verification_description }}</p>
+
+        <form method="GET" action="{{ url_for('verification') }}" class="verification-form">
+            <input type="text" name="cert_code" class="form-control" placeholder="Enter Verification Code (e.g. CERT-XYZ123)" required value="{{ cert_code or '' }}">
+            <button type="submit" class="btn btn-primary verification-submit">Verify Now</button>
+        </form>
+
+        {% if cert_code %}
+            <hr class="verification-divider">
+
+            {% if certificate %}
+                <div class="verification-result verification-valid">
+                    <h3 class="verification-heading">
+                        <span>Valid Certificate</span>
+                    </h3>
+                    <p><strong>Issued To:</strong> {{ certificate.user.name }}</p>
+                    <p><strong>Program:</strong> {{ certificate.product.title }} ({{ certificate.product.category }})</p>
+                    <p><strong>Issue Date:</strong> {{ certificate.created_at.strftime('%Y-%m-%d') }}</p>
+                    <p><strong>Status:</strong> Successfully Completed & Verified.</p>
+
+                    {% set submission = certificate.user.submissions | selectattr("product_id", "equalto", certificate.product_id) | first %}
+                    {% if submission %}
+                        <div class="verification-link-box">
+                            <strong>Final Output Link:</strong><br>
+                            <a href="{{ submission.github_link }}" target="_blank" style="color: var(--secondary); text-decoration: underline;">{{ submission.github_link }}</a>
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="verification-result verification-invalid">
+                    <h3 class="verification-heading">Verification Failed</h3>
+                    <p>We could not find a certificate matching the code "{{ cert_code }}". Please ensure the code is correct and try again.</p>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

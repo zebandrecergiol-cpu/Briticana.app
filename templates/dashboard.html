@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="main-container">
+    <div class="glass" style="padding: 40px; margin-top: 50px; display: flex; align-items: center; gap: 30px; background: white;">
+        <div style="width: 100px; height: 100px; border-radius: 50%; background: var(--bg-light); overflow: hidden; display: flex; justify-content: center; align-items: center; font-size: 2.5rem; border: 2px solid var(--secondary);">
+            {% if user.photo_url %}
+                <img src="{{ user.photo_url }}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+            {% else %}
+                👤
+            {% endif %}
+        </div>
+        <div>
+            <h1 style="margin: 0 0 10px 0; color: var(--primary);">Welcome, {{ user.name or 'Student' }}</h1>
+            <p style="margin: 0; color: var(--text-muted);">Category: {{ user.category or 'Not Set' }} | Email: {{ user.email or 'Not Set' }}</p>
+        </div>
+        <button class="btn btn-outline" style="margin-left: auto;">Edit Profile</button>
+    </div>
+
+    <div style="margin-top: 50px;">
+        <h2 class="section-title" style="text-align: left;">Your Purchased Items</h2>
+        
+        <div class="domain-grid">
+            {% for purchase in purchases %}
+            <div class="glass" style="padding: 25px; background: white;">
+                <span style="background: var(--bg-light); padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; border: 1px solid var(--secondary); color: var(--secondary);">{{ purchase.product.category }}</span>
+                <h3 style="margin: 15px 0;">{{ purchase.product.title }}</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Status: <strong>{{ purchase.status }}</strong></p>
+                
+                <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 20px 0;">
+                
+                <h4>Submit Your Work</h4>
+                <form class="form-group" method="POST" action="{{ url_for('submit_task', purchase_id=purchase.id) }}">
+                    <label>GitHub Repository Link</label>
+                    <input type="url" name="github_link" class="form-control" placeholder="https://github.com/yourusername/repo" style="margin-bottom: 10px;" required>
+                    <button type="submit" class="btn btn-primary" style="padding: 8px 15px; font-size: 0.9rem;">Submit Result</button>
+                </form>
+                
+                {% if purchase.status == 'Completed' %}
+                <!-- Note: In a real app we'd fetch the specific cert for this product. 
+                     For the demo, we assume the user has a certificate. -->
+                {% set cert = user.certificates | selectattr("product_id", "equalto", purchase.product_id) | first %}
+                {% if cert %}
+                <a href="{{ url_for('view_certificate', cert_code=cert.cert_code) }}" target="_blank" class="btn btn-outline" style="width: 100%; margin-top: 15px; border-color: #10b981; color: #10b981; text-align: center; display: block; box-sizing: border-box;">View & Download Certificate</a>
+                {% endif %}
+                {% endif %}
+            </div>
+            {% else %}
+            <div class="glass" style="padding: 30px; grid-column: 1 / -1; text-align: center;">
+                <p>You haven't purchased any items yet.</p>
+                <a href="{{ url_for('index') }}" class="btn btn-primary">Explore Opportunities</a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
