@@ -23,12 +23,13 @@ GitHub Pages only hosts static HTML, CSS, and JavaScript. This project uses Flas
 6. Enter values for:
    - `ADMIN_USERNAME`
    - `ADMIN_PASSWORD`
+   - optionally set a private `ADMIN_URL_PREFIX` later in service settings, such as `/briticana-control-room`
 7. Create the Blueprint.
 
 ## After deploy
 
 - Your public site will get an `onrender.com` link.
-- Your admin panel will be available at `/admin/login`.
+- Your admin panel will be available at `/admin/login` unless you set a custom `ADMIN_URL_PREFIX`.
 - On the first deploy, the app will try to copy your current SQLite content into the hosted database automatically.
 
 ## Free plan limits

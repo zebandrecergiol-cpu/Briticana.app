@@ -17,7 +17,9 @@ if project_home not in sys.path:
 os.environ.setdefault("SECRET_KEY", "change-this-on-pythonanywhere")
 os.environ.setdefault("ADMIN_USERNAME", "admin")
 os.environ.setdefault("ADMIN_PASSWORD", "admin123")
+os.environ.setdefault("ADMIN_URL_PREFIX", "/secure-admin")
 os.environ.setdefault("SQLITE_PATH", "/home/YOUR_USERNAME/briticana-data/briticana.db")
 os.environ.setdefault("UPLOAD_FOLDER", "/home/YOUR_USERNAME/briticana-data/uploads")
+os.environ.setdefault("PYTHONANYWHERE_SITE", "true")
 
 from app import app as application

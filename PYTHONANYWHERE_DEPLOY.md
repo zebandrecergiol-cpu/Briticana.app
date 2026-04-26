@@ -68,7 +68,20 @@ Official docs:
    - `pythonanywhere_wsgi.py`
 
 15. Replace every `YOUR_USERNAME` in that file with your real PythonAnywhere username.
-16. In the `Files` tab or Bash console, set stronger admin credentials by editing the WSGI file values if needed.
+16. Set stronger values in that WSGI file for:
+
+   - `SECRET_KEY`
+   - `ADMIN_USERNAME`
+   - `ADMIN_PASSWORD`
+   - `ADMIN_URL_PREFIX`
+
+17. Keep `ADMIN_URL_PREFIX` private, for example:
+
+   ```text
+   /briticana-control-room
+   ```
+
+18. In the `Files` tab or Bash console, keep a note of that private admin path for yourself only.
 17. Reload the web app from the `Web` tab.
 
 ## After setup
@@ -76,7 +89,7 @@ Official docs:
 - Public website:
   - `https://yourusername.pythonanywhere.com/`
 - Admin login:
-  - `https://yourusername.pythonanywhere.com/admin/login`
+  - `https://yourusername.pythonanywhere.com/YOUR_PRIVATE_PREFIX/login`
 
 ## When you edit code later
 
@@ -97,3 +110,5 @@ Official docs:
 - Text edits and product/domain changes can stay in SQLite.
 - Uploaded files count toward your 512 MiB quota.
 - Prefer image URLs when possible for hero images and product images.
+- Health-check URL:
+  - `https://yourusername.pythonanywhere.com/health`

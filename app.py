@@ -6,6 +6,7 @@ import sqlite3
 import uuid
 
 from flask import Flask, flash, redirect, render_template, request, send_from_directory, session, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.utils import secure_filename
 
 from models import (
@@ -20,6 +21,7 @@ from models import (
 )
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 basedir = os.path.abspath(os.path.dirname(__file__))
 default_upload_dir = os.path.join(basedir, 'static', 'uploads')
 default_sqlite_path = os.path.join(basedir, 'briticana.db')
@@ -49,6 +51,17 @@ def is_sqlite_uri(database_uri):
     return database_uri.startswith('sqlite:///')
 
 
+def normalize_admin_prefix(prefix_value):
+    cleaned = (prefix_value or '/admin').strip()
+    if not cleaned:
+        return '/admin'
+    if not cleaned.startswith('/'):
+        cleaned = '/' + cleaned
+    if cleaned != '/' and cleaned.endswith('/'):
+        cleaned = cleaned.rstrip('/')
+    return cleaned
+
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'briticana_secret_key')
 app.config['SQLALCHEMY_DATABASE_URI'] = build_database_uri()
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -56,6 +69,15 @@ app.config['ADMIN_USERNAME'] = os.environ.get('ADMIN_USERNAME', 'admin')
 app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'admin123')
 app.config['UPLOAD_FOLDER'] = os.environ.get('UPLOAD_FOLDER', default_upload_dir)
 app.config['MAX_CONTENT_LENGTH'] = 8 * 1024 * 1024
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['ADMIN_URL_PREFIX'] = normalize_admin_prefix(
+    os.environ.get('ADMIN_URL_PREFIX', '/admin')
+)
+
+if os.environ.get('RENDER') == 'true' or os.environ.get('PYTHONANYWHERE_SITE'):
+    app.config['PREFERRED_URL_SCHEME'] = 'https'
+    app.config['SESSION_COOKIE_SECURE'] = True
 
 ALLOWED_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'}
 PRODUCT_STATUS_OPTIONS = ['Open', 'Closed', 'Coming Soon']
@@ -579,6 +601,7 @@ def inject_shared_context():
         'current_year': datetime.utcnow().year,
         'is_render_runtime': os.environ.get('RENDER') == 'true',
         'is_database_backed': bool(os.environ.get('DATABASE_URL')),
+        'admin_url_prefix': app.config['ADMIN_URL_PREFIX'],
         'product_image_for': lambda product: resolve_product_image(product, content),
         'product_status_label': get_status_label,
         'product_status_class': get_status_class,
@@ -717,7 +740,7 @@ def details(product_id):
     return render_template('details.html', product=product)
 
 
-@app.route('/admin/login', methods=['GET', 'POST'])
+@app.route(f"{app.config['ADMIN_URL_PREFIX']}/login", methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
         username = (request.form.get('username') or '').strip()
@@ -734,7 +757,7 @@ def admin_login():
     return render_template('admin_login.html')
 
 
-@app.route('/admin/logout')
+@app.route(f"{app.config['ADMIN_URL_PREFIX']}/logout")
 @admin_required
 def admin_logout():
     session.pop('is_admin', None)
@@ -743,7 +766,7 @@ def admin_logout():
     return redirect(url_for('admin_login'))
 
 
-@app.route('/admin')
+@app.route(app.config['ADMIN_URL_PREFIX'])
 @admin_required
 def admin_dashboard():
     sync_domain_records()
@@ -773,7 +796,7 @@ def admin_dashboard():
     )
 
 
-@app.route('/admin/content', methods=['POST'])
+@app.route(f"{app.config['ADMIN_URL_PREFIX']}/content", methods=['POST'])
 @admin_required
 def update_site_content():
     save_site_content(request.form, request.files)
@@ -781,7 +804,7 @@ def update_site_content():
     return redirect(url_for('admin_dashboard') + '#content-panel')
 
 
-@app.route('/admin/domains', methods=['POST'])
+@app.route(f"{app.config['ADMIN_URL_PREFIX']}/domains", methods=['POST'])
 @admin_required
 def create_domain():
     name = (request.form.get('name') or '').strip()
@@ -805,7 +828,7 @@ def create_domain():
     return redirect(url_for('admin_dashboard') + '#domain-panel')
 
 
-@app.route('/admin/domains/<int:domain_id>/edit', methods=['POST'])
+@app.route(f"{app.config['ADMIN_URL_PREFIX']}/domains/<int:domain_id>/edit", methods=['POST'])
 @admin_required
 def update_domain(domain_id):
     domain = DomainContent.query.get_or_404(domain_id)
@@ -838,7 +861,7 @@ def update_domain(domain_id):
     return redirect(url_for('admin_dashboard') + '#domain-panel')
 
 
-@app.route('/admin/domains/<int:domain_id>/delete', methods=['POST'])
+@app.route(f"{app.config['ADMIN_URL_PREFIX']}/domains/<int:domain_id>/delete", methods=['POST'])
 @admin_required
 def delete_domain(domain_id):
     domain = DomainContent.query.get_or_404(domain_id)
@@ -853,7 +876,7 @@ def delete_domain(domain_id):
     return redirect(url_for('admin_dashboard') + '#domain-panel')
 
 
-@app.route('/admin/products', methods=['POST'])
+@app.route(f"{app.config['ADMIN_URL_PREFIX']}/products", methods=['POST'])
 @admin_required
 def create_product():
     title = (request.form.get('title') or '').strip()
@@ -893,7 +916,7 @@ def create_product():
     return redirect(url_for('admin_dashboard') + '#product-panel')
 
 
-@app.route('/admin/products/<int:product_id>/edit', methods=['POST'])
+@app.route(f"{app.config['ADMIN_URL_PREFIX']}/products/<int:product_id>/edit", methods=['POST'])
 @admin_required
 def update_product(product_id):
     product = Product.query.get_or_404(product_id)
@@ -931,7 +954,7 @@ def update_product(product_id):
     return redirect(url_for('admin_dashboard') + '#product-panel')
 
 
-@app.route('/admin/products/<int:product_id>/delete', methods=['POST'])
+@app.route(f"{app.config['ADMIN_URL_PREFIX']}/products/<int:product_id>/delete", methods=['POST'])
 @admin_required
 def delete_product(product_id):
     product = Product.query.get_or_404(product_id)
@@ -939,6 +962,11 @@ def delete_product(product_id):
     db.session.commit()
     flash('Product deleted successfully.')
     return redirect(url_for('admin_dashboard') + '#product-panel')
+
+
+@app.route('/health')
+def health():
+    return {'status': 'ok'}, 200
 
 
 @app.route('/verification')
